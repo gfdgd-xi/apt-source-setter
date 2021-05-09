@@ -83,7 +83,7 @@ while True:
             traceback.print_exc()
             sg.PopupError(traceback.format_exc(), title="错误")
     if event == "other":
-        os.system("python3 open.py")
+        os.system("OpenAptSources")
     if event == "RefreshApt":
         lay = [
             [sg.Text("正在刷新 apt 源……")]

@@ -46,11 +46,11 @@ while True:
             sg.PopupError("你没有选中任何内容！", title="错误")
         else:
             if values["listbox1"][0] == "/etc/apt/sources.list":
-                os.system("python3 main.py")
+                os.system("OpenAptSources")
             else:
-                os.system("python3 main.py '/etc/apt/sources.list.d/{}'".format(values["listbox1"][0]))
+                os.system("OpenAptSources '/etc/apt/sources.list.d/{}'".format(values["listbox1"][0]))
     if event == "add":
-        os.system("python3 add.py")
+        os.system("AddAptSources")
     if event == "del":
         if len(values["listbox1"]) == 0:  # 判断是否有选中内容
             sg.PopupError("你没有选中任何内容！", title="错误")
