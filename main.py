@@ -1,0 +1,110 @@
+#!/usr/bin/python3
+#################################################################################
+# 一个基于 Python3 的 PySimpleGUI 构建的 apt 源修改器
+# 作者：gfdgd xi
+# 版本：1.0
+# 适用平台：Linux（debian 及其衍生版）
+# 感谢 debian（以及衍生版）、PySimpleGUI、Python3 以及 apt 的开发者们让我能开发这个程序
+# 程序共计有 3 个组件（1/3）
+#################################################################################
+# 引入库
+# 需要使用 pip 安装“PySimpleGUI”（pip3 install PySimpleGUI）
+import PySimpleGUI as sg
+import os
+import sys
+import subprocess
+import traceback
+import webbrowser
+try:
+    import PySimpleGUI as sg
+except:
+    print("程序所需库未安装，是否要现在安装？【Y/N】")
+    if input() == "Y":
+        os.system("pip3 install PySImpleGUI")
+        print("安装完毕！请重新运行！")
+
+## 所需函数
+# 读取文本文档
+def ReadTxt(path):
+    f = open(path, "r")  # 设置文件对象
+    str = f.read()  # 获取内容
+    f.close()  # 关闭文本对象
+    return str  # 返回结果
+
+# 写入文本文档
+def WriteTxt(path, things):
+    file = open(path, 'w', encoding='UTF-8')  # 设置文件对象
+    file.write(things)  # 写入文本
+    file.close()  # 关闭文本对象
+
+def GetCmd(cmd):
+    # cmd 是要获取输出的命令
+    return subprocess.getoutput(cmd)
+
+## 创建窗口
+menu = [
+    ["程序", ["退出"]],
+    ["关于", ["软件官网", "帮助", "关于这个程序"]]
+]
+layout = [
+    [sg.Menu(menu, key="menu")],
+    [sg.Multiline(key="M1", size=(100, 10), do_not_clear=True)],
+    [sg.Button("保存", key="save"), sg.Button("其他 apt 源文件", key="other"), sg.Button("刷新 apt 源", key="RefreshApt"), sg.Button("退出", key="exit")]
+]
+
+try:
+    os.mkdir("/etc/temp")
+    os.removedirs("/etc/temp")
+except:
+    sg.PopupOK("你应该使用“root”用户运行该程序，而不是“{}”来运行该程序".format(os.getlogin()), title="警告")
+window = sg.Window(title="apt 源设置器（运行于{}）".format(os.getlogin()), layout=layout, finalize=True)
+try:
+    if len(sys.argv) > 0 and sys.argv[1]:
+        window.FindElement("M1").Update(ReadTxt(sys.argv[1]))
+    else:
+        window.FindElement("M1").Update(ReadTxt("/etc/apt/sources.list"))
+except:
+    window.FindElement("M1").Update(ReadTxt("/etc/apt/sources.list"))
+while True:
+    event, values = window.read()
+    if event == None or event == "退出" or event == "exit":
+        break
+    if event == "save":
+        try:
+            try:
+                if len(sys.argv) > 0 and sys.argv[1]:
+                    WriteTxt(sys.argv[1], values["M1"])
+                else:
+                    WriteTxt("/etc/apt/sources.list", values["M1"])
+            except:
+                WriteTxt("/etc/apt/sources.list", values["M1"])
+            sg.Popup("保存完毕！", title="完成")
+        except:
+            traceback.print_exc()
+            sg.PopupError(traceback.format_exc(), title="错误")
+    if event == "other":
+        os.system("python3 open.py")
+    if event == "RefreshApt":
+        lay = [
+            [sg.Text("正在刷新 apt 源……")]
+        ]
+        win = sg.Window(title="正在刷新 apt 源\n", layout=lay, finalize=True, size=(300, 20))
+        commandtips = GetCmd("apt update")
+        win.close()
+        lay = [
+            [sg.Text("刷新完毕！详细信息：")],
+            [sg.Multiline(commandtips, size=(100, 10), disabled=True)]
+        ]
+        win = sg.Window(title="正在刷新 apt 源\n", layout=lay, finalize=True)
+        while True:
+            event, values = win.read()
+            if event is None:
+                break
+        win.close()
+    if event == "关于这个程序":
+        sg.PopupScrolled("一个基于 Python3 的 PySimpleGUI 构建的 apt 源修改器\n版本：1.0\n适用平台：Linux（debian 及其衍生版）\n组件数：3（1/3）\nPySimpleGUI 版本：" + sg.version, title="关于")
+    if event == "帮助":
+        sg.PopupScrolled("无", title="帮助")
+    if event == "软件官网":
+        webbrowser.open_new_tab("https://gitee.com/gfdgd-xi/apt-source-setter")
+window.close()

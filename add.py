@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+#################################################################################
+# 一个基于 Python3 的 PySimpleGUI 构建的 apt 源修改器
+# 作者：gfdgd xi
+# 版本：1.0
+# 适用平台：Linux（debian 及其衍生版）
+# 感谢 debian（以及衍生版）、PySimpleGUI、Python3 以及 apt 的开发者们让我能开发这个程序
+# 程序共计有 3 个组件（3/3）
+#################################################################################
+# 引入库
+# 需要使用 pip 安装“PySimpleGUI”（pip3 install PySimpleGUI）
+import os
+import traceback
+import webbrowser
+try:
+    import PySimpleGUI as sg
+except:
+    print("程序所需库未安装，是否要现在安装？【Y/N】")
+    if input() == "Y":
+        os.system("pip3 install PySImpleGUI")
+        print("安装完毕！请重新运行！")
+
+# 写入文本文档
+def WriteTxt(path, things):
+    file = open(path, 'w', encoding='UTF-8')  # 设置文件对象
+    file.write(things)  # 写入文本
+    file.close()  # 关闭文本对象
+
+## 创建窗口
+menu = [
+    ["程序", ["退出"]],
+    ["关于", ["软件官网", "帮助", "关于这个程序"]]
+]
+layout = [
+    [sg.Menu(menu)],
+    [sg.Text("保存文件名：/etc/apt/sources.list.d/"), sg.Input(key="title"), sg.Text(".list")],
+    [sg.Multiline(key="m1", size=(100, 10))],
+    [sg.Button("保存", key="save"), sg.Button("退出", key="exit")]
+]
+
+try:
+    os.mkdir("/etc/temp")
+    os.removedirs("/etc/temp")
+except:
+    sg.PopupOK("你应该使用“root”用户运行该程序，而不是“{}”来运行该程序".format(os.getlogin()), title="警告")
+window = sg.Window(title="添加 apt 源（运行于{}）".format(os.getlogin()), layout=layout, finalize=True)
+while True:
+    event, values = window.read()
+    if event == None or event == "exit":
+        break
+    if event == "save":
+        if values["title"] is "":
+            sg.PopupError("你没有输入要保存的文件名", title="错误")
+            continue
+        try:
+            if os.path.exists("/etc/apt/sources.list.d/{}.list".format(values["title"])):
+                if not sg.PopupOKCancel("文件已存在，确定要覆盖吗？") == "OK":
+                    continue
+            WriteTxt("/etc/apt/sources.list.d/{}.list".format(values["title"]), values["m1"])
+            sg.Popup("保存完毕！", title="完成")
+        except:
+            traceback.print_exc()
+            sg.PopupError(traceback.format_exc(), title="错误")
+    if event == "关于这个程序":
+        sg.PopupScrolled("一个基于 Python3 的 PySimpleGUI 构建的 apt 源修改器\n版本：1.0\n适用平台：Linux（debian 及其衍生版）\n组件数：3（3/3）\nPySimpleGUI 版本：" + sg.version, title="关于")
+    if event == "帮助":
+        sg.PopupScrolled("无", title="帮助")
+    if event == "软件官网":
+        webbrowser.open_new_tab("https://gitee.com/gfdgd-xi/apt-source-setter")
+window.close()

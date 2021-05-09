@@ -1,0 +1,76 @@
+#!/usr/bin/python3
+#################################################################################
+# 一个基于 Python3 的 PySimpleGUI 构建的 apt 源修改器
+# 作者：gfdgd xi
+# 版本：1.0
+# 适用平台：Linux（debian 及其衍生版）
+# 感谢 debian（以及衍生版）、PySimpleGUI、Python3 以及 apt 的开发者们让我能开发这个程序
+# 程序共计有 3 个组件（2/3）
+#################################################################################
+# 引入库
+# 需要使用 pip 安装“PySimpleGUI”（pip3 install PySimpleGUI）
+import os
+import traceback
+import webbrowser
+try:
+    import PySimpleGUI as sg
+except:
+    print("程序所需库未安装，是否要现在安装？【Y/N】")
+    if input() == "Y":
+        os.system("pip3 install PySImpleGUI")
+        print("安装完毕！请重新运行！")
+
+## 创建窗口
+menu = [
+    ["程序", ["退出"]],
+    ["关于", ["软件官网", "帮助", "关于这个程序"]]
+]
+layout = [
+    [sg.Menu(menu)],
+    [sg.Listbox(["/etc/apt/sources.list"] + os.listdir("/etc/apt/sources.list.d"), size=(100, 10), key="listbox1")],
+    [sg.Button("打开（编辑） apt 源", key="open"), sg.Button("添加新的 apt 源", key="add"), sg.Button("删除选中 apt 源", key="del"), sg.Button("刷新", key="refresh"), sg.Button("退出", key="exit")]
+]
+
+try:
+    os.mkdir("/etc/temp")
+    os.removedirs("/etc/temp")
+except:
+    sg.PopupOK("你应该使用“root”用户运行该程序，而不是“{}”来运行该程序".format(os.getlogin()), title="警告")
+window = sg.Window(title="apt 源列表（运行于{}）".format(os.getlogin()), layout=layout, finalize=True)
+while True:
+    event, values = window.read()
+    if event is None or event == "exit" or event == "退出":
+        break
+    if event == "open":
+        if len(values["listbox1"]) == 0:  # 判断是否有选中内容
+            sg.PopupError("你没有选中任何内容！", title="错误")
+        else:
+            if values["listbox1"][0] == "/etc/apt/sources.list":
+                os.system("python3 main.py")
+            else:
+                os.system("python3 main.py '/etc/apt/sources.list.d/{}'".format(values["listbox1"][0]))
+    if event == "add":
+        os.system("python3 add.py")
+    if event == "del":
+        if len(values["listbox1"]) == 0:  # 判断是否有选中内容
+            sg.PopupError("你没有选中任何内容！", title="错误")
+        else:
+            if sg.PopupOKCancel("你确定要永远删除该源吗？") == "OK":
+                try:
+                    if values["listbox1"][0] == "/etc/apt/sources.list":
+                        os.remove("/etc/apt/sources.list")
+                    else:
+                        os.remove("/etc/apt/sources.list.d/{}".format(values["listbox1"][0]))
+                except:
+                    traceback.print_exc()
+                    sg.PopupError(traceback.format_exc(), title="错误")
+        window["listbox1"].update(["/etc/apt/sources.list"] + os.listdir("/etc/apt/sources.list.d"))
+    if event == "refresh":
+        window["listbox1"].update(["/etc/apt/sources.list"] + os.listdir("/etc/apt/sources.list.d"))
+    if event == "关于这个程序":
+        sg.PopupScrolled("一个基于 Python3 的 PySimpleGUI 构建的 apt 源修改器\n版本：1.0\n适用平台：Linux（debian 及其衍生版）\n组件数：3（2/3）\nPySimpleGUI 版本：" + sg.version, title="关于")
+    if event == "帮助":
+        sg.PopupScrolled("无", title="帮助")
+    if event == "软件官网":
+        webbrowser.open_new_tab("https://gitee.com/gfdgd-xi/apt-source-setter")
+window.close()
