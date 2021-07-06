@@ -17,7 +17,7 @@ try:
 except:
     print("程序所需库未安装，是否要现在安装？【Y/N】")
     if input() == "Y":
-        os.system("pip3 install PySImpleGUI")
+        os.system("pip3 install PySimpleGUI")
         print("安装完毕！请重新运行！")
 
 # 写入文本文档
